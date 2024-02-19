@@ -1,7 +1,7 @@
 [package]
 name = "tower-sessions-firestore-store"
 description = "tower-sessions store using Cloud Firestore"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2021"
 authors = ["Brint E. Kriebel, At the Tavern <brint@tavern.at>"]
 license = "MIT"
