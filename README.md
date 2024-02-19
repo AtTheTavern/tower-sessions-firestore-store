@@ -25,9 +25,9 @@ To use the crate in your project, add the following to your `Cargo.toml` file:
 
 ```toml
 [dependencies]
-firestore = "0.39.0"
-tower-sessions = "0.9.1"
-tower-sessions-firestore-store = "0.1.0"
+firestore = "0.39"
+tower-sessions = "0.10"
+tower-sessions-firestore-store = "0.2"
 ```
 
 ## Usage
