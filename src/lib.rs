@@ -1,9 +1,11 @@
-use std::sync::Arc;
+use std::{collections::HashMap, str::FromStr, sync::Arc};
 
 use async_trait::async_trait;
 use chrono::{DateTime, TimeZone, Utc};
 use firestore::FirestoreDb;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use time::OffsetDateTime;
 use tower_sessions_core::{
     session::{Id, Record},
     session_store, SessionStore,
@@ -43,8 +45,35 @@ impl FirestoreStore {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+struct FirestoreRecord {
+    pub id: String,
+    pub data: HashMap<String, Value>,
+    pub expiry_date: OffsetDateTime,
+}
+
+impl From<Record> for FirestoreRecord {
+    fn from(record: Record) -> Self {
+        Self {
+            id: record.id.to_string(),
+            data: record.data,
+            expiry_date: record.expiry_date,
+        }
+    }
+}
+
+impl From<FirestoreRecord> for Record {
+    fn from(record: FirestoreRecord) -> Self {
+        Self {
+            id: Id::from_str(&record.id).unwrap_or_default(),
+            data: record.data,
+            expiry_date: record.expiry_date,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct FirestoreDocument {
-    record: Record,
+    record: FirestoreRecord,
     #[serde(
         rename = "expireAt",
         with = "firestore::serialize_as_optional_timestamp"
@@ -61,7 +90,10 @@ impl From<Record> for FirestoreDocument {
             chrono::offset::LocalResult::Single(expire_at) => Some(expire_at),
             _ => None,
         };
-        Self { record, expire_at }
+        Self {
+            record: record.into(),
+            expire_at,
+        }
     }
 }
 
@@ -93,7 +125,7 @@ impl SessionStore for FirestoreStore {
             .map_err(FirestoreStoreError::Firestore)?;
 
         if let Some(doc) = doc {
-            Ok(Some(doc.record))
+            Ok(Some(doc.record.into()))
         } else {
             Ok(None)
         }
